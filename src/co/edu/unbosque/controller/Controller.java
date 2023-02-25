@@ -3,8 +3,8 @@ package co.edu.unbosque.controller;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import co.edu.unbosque.model.CandidatosDTO;
-import co.edu.unbosque.model.ImplementsCandidatosDAO;
+
+import co.edu.unbosque.model.CandidatosDAO;
 import co.edu.unbosque.view.Busqueda;
 import co.edu.unbosque.view.Crear;
 import co.edu.unbosque.view.Eliminar;
@@ -16,6 +16,7 @@ import co.edu.unbosque.view.Principal;
 
 /**
  * Class that acts as an intermediary between the model and the view
+ * 
  * @author Johan Silva
  * @author Miguel Linarez
  */
@@ -28,15 +29,15 @@ public class Controller implements MouseListener, MouseMotionListener {
 	private Encontrado encontrado;
 	private Lista lista;
 	private int xmouse, ymouse;
-	private ImplementsCandidatosDAO candidatos;
+	private CandidatosDAO candidatos;
 //	private KeyListener keyNumeros, keyLetras;
-	
+
 	/**
 	 * Constructor method
 	 */
 	public Controller() {
-		candidatos = new ImplementsCandidatosDAO();
-		candidatos.cargar();
+		candidatos = new CandidatosDAO();
+		candidatos.start();
 		principal = new Principal(this, this);
 		crear = new Crear(this, this);
 		busqueda = new Busqueda(this, this);
@@ -46,32 +47,7 @@ public class Controller implements MouseListener, MouseMotionListener {
 		busquedaEncotrado = new Busqueda(this, this);
 		busqueEliminar = new Busqueda(this, this);
 		lista = new Lista(this, this);
-		principal.setVisible(true);
-		// PENDIENTE
-//		keyNumeros = new KeyListener() {
-//			@Override
-//			public void keyTyped(KeyEvent e) {
-//				if (!Character.isDigit(e.getKeyChar()) || e.getKeyChar() == '#') {
-//					e.consume();
-//				}
-//			}
-//			@Override
-//			public void keyReleased(KeyEvent e) {}
-//			@Override
-//			public void keyPressed(KeyEvent e) {}
-//		};
-//		keyLetras = new KeyListener() {
-//			@Override
-//			public void keyTyped(KeyEvent e) {
-//				if (Character.isDigit(e.getKeyChar()) || e.getKeyChar() == '#') {
-//					e.consume();
-//				}
-//			}
-//			@Override
-//			public void keyReleased(KeyEvent e) {}
-//			@Override
-//			public void keyPressed(KeyEvent e) {}
-//		};
+//		principal.setVisible(true);
 	}
 
 	@Override
@@ -137,16 +113,16 @@ public class Controller implements MouseListener, MouseMotionListener {
 			busqueEliminar.setVisible(true);
 		} else if (e.getSource().equals(principal.obtenerLB(5))) {
 			principal.setVisible(false);
-			lista.rellenarInfo(candidatos.listar());
+//			lista.rellenarInfo(candidatos.listar());
 			lista.setVisible(true);
 		} else if (e.getSource().equals(principal.obtenerLB(6))) {
 			principal.setVisible(false);
 			busquedaEncotrado.setVisible(true);
 		} else if (e.getSource().equals(crear.obtenerLB(1))) {
 			if (!crear.obtenerTextos().equals("0001")) {
-				candidatos.ingresar(crear.getNombre(), crear.getApellido(), crear.getCedula(), crear.getEdad(),
-						crear.getCargo());
-				PopUp.mostrarMensaje("Aspirante ingresado exitosamente.");
+//				candidatos.ingresar(crear.getNombre(), crear.getApellido(), crear.getCedula(), crear.getEdad(),
+//						crear.getCargo());
+//				PopUp.mostrarMensaje("Aspirante ingresado exitosamente.");
 				crear.setVisible(false);
 				crear.limpiar();
 				principal.setVisible(true);
@@ -160,16 +136,16 @@ public class Controller implements MouseListener, MouseMotionListener {
 		} else if (e.getSource().equals(busqueda.obtenerLB(1))) {
 			busqueda.setVisible(false);
 			try {
-				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busqueda.obtenerTextos()));
-				if (tmp != null) {
-					modificar.darTextos(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
-							tmp.getCargos());
-					modificar.setVisible(true);
-					busqueda.limpiar();
-				} else {
-					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-					busqueda.setVisible(true);
-				}
+//				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busqueda.obtenerTextos()));
+//				if (tmp != null) {
+//					modificar.darTextos(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
+//							tmp.getCargos());
+//					modificar.setVisible(true);
+//					busqueda.limpiar();
+//				} else {
+//					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+//					busqueda.setVisible(true);
+//				}
 			} catch (Exception e2) {
 				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
 				busqueda.setVisible(true);
@@ -179,47 +155,47 @@ public class Controller implements MouseListener, MouseMotionListener {
 			busqueda.limpiar();
 			principal.setVisible(true);
 		} else if (e.getSource().equals(modificar.obtenerLB(1))) {
-			if (!modificar.obtenerTextos().equals("0001")) {
-				candidatos.modificar(modificar.getNombre(), modificar.getApellido(), modificar.getCedula(),
-						modificar.getEdad(), modificar.getCargo());
-				PopUp.mostrarMensaje("Aspirante actualizado exitosamente.");
-				modificar.setVisible(false);
-				modificar.limpiar();
-				principal.setVisible(true);
-			} else {
-				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
-			}
+//			if (!modificar.obtenerTextos().equals("0001")) {
+//				candidatos.modificar(modificar.getNombre(), modificar.getApellido(), modificar.getCedula(),
+//						modificar.getEdad(), modificar.getCargo());
+//				PopUp.mostrarMensaje("Aspirante actualizado exitosamente.");
+//				modificar.setVisible(false);
+//				modificar.limpiar();
+//				principal.setVisible(true);
+//			} else {
+//				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+//			}
 		} else if (e.getSource().equals(modificar.obtenerLB(2))) {
 			modificar.setVisible(false);
 			modificar.limpiar();
 			principal.setVisible(true);
 		} else if (e.getSource().equals(busqueEliminar.obtenerLB(1))) {
-			busqueEliminar.setVisible(false);
-			try {
-				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busqueEliminar.obtenerTextos()));
-				if (tmp != null) {
-					eliminar.rellenarInfo(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
-							tmp.getCargos());
-					eliminar.setVisible(true);
-				} else {
-					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-					busqueEliminar.setVisible(true);
-				}
-			} catch (Exception e2) {
-				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
-				busqueEliminar.setVisible(true);
-			}
+//			busqueEliminar.setVisible(false);
+//			try {
+//				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busqueEliminar.obtenerTextos()));
+//				if (tmp != null) {
+//					eliminar.rellenarInfo(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
+//							tmp.getCargos());
+//					eliminar.setVisible(true);
+//				} else {
+//					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+//					busqueEliminar.setVisible(true);
+//				}
+//			} catch (Exception e2) {
+//				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+//				busqueEliminar.setVisible(true);
+//			}
 		} else if (e.getSource().equals(busqueEliminar.obtenerLB(2))) {
 			busqueEliminar.setVisible(false);
 			busqueEliminar.limpiar();
 			principal.setVisible(true);
 		} else if (e.getSource().equals(eliminar.obtenerLB(1))) {
-			candidatos.eliminar(Integer.parseInt(busqueEliminar.obtenerTextos()));
-			PopUp.mostrarMensaje("Aspirante eliminado exitosamente.");
-			eliminar.setVisible(false);
-			busqueEliminar.limpiar();
-			eliminar.limpiar();
-			principal.setVisible(true);
+//			candidatos.eliminar(Integer.parseInt(busqueEliminar.obtenerTextos()));
+//			PopUp.mostrarMensaje("Aspirante eliminado exitosamente.");
+//			eliminar.setVisible(false);
+//			busqueEliminar.limpiar();
+//			eliminar.limpiar();
+//			principal.setVisible(true);
 		} else if (e.getSource().equals(eliminar.obtenerLB(2))) {
 			eliminar.setVisible(false);
 			busqueEliminar.limpiar();
@@ -227,20 +203,20 @@ public class Controller implements MouseListener, MouseMotionListener {
 			principal.setVisible(true);
 		} else if (e.getSource().equals(busquedaEncotrado.obtenerLB(1))) {
 			busquedaEncotrado.setVisible(false);
-			try {
-				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busquedaEncotrado.obtenerTextos()));
-				if (tmp != null) {
-					encontrado.rellenarInfo(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
-							tmp.getCargos());
-					encontrado.setVisible(true);
-				} else {
-					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-					busquedaEncotrado.setVisible(true);
-				}
-			} catch (Exception e2) {
-				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
-				busquedaEncotrado.setVisible(true);
-			}
+//			try {
+//				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busquedaEncotrado.obtenerTextos()));
+//				if (tmp != null) {
+//					encontrado.rellenarInfo(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
+//							tmp.getCargos());
+//					encontrado.setVisible(true);
+//				} else {
+//					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+//					busquedaEncotrado.setVisible(true);
+//				}
+//			} catch (Exception e2) {
+//				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+//				busquedaEncotrado.setVisible(true);
+//			}
 			busquedaEncotrado.limpiar();
 		} else if (e.getSource().equals(busquedaEncotrado.obtenerLB(2))) {
 			busquedaEncotrado.setVisible(false);

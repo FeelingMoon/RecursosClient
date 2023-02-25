@@ -6,46 +6,45 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class Conexion extends Thread {
 	private Socket socket;
 	private ServerSocket server;
-	private Scanner sn;
 	private DataOutputStream out;
 	private DataInputStream in; // Input stream from server
-	private String address;
+	private String address, inf, line, mensaje;
 	private int port;
+	private boolean confErr;
 
 	// constructor to put ip address and port
 	public Conexion(String address, int port) {
 		// initialize socket and input output streams
 		this.socket = null;
 		this.server = null;
-		this.sn = new Scanner(System.in);
 		this.out = null;
 		this.address = address;
 		this.port = port;
+		this.inf = "";
+		this.line = "";
+		this.mensaje = "";
+		this.confErr = false;
 	}
 
 	@Override
 	public void run() {
-
-		// string to read message from input
-		String line = "";
 
 		// keep reading until "Over" is input
 		while (!line.equals("Over")) {
 			// establish a connection
 			try {
 				this.socket = new Socket(this.address, this.port);
-				System.out.println("Connected");
-
 				// sends output to the socket
 				this.out = new DataOutputStream(socket.getOutputStream());
-
-				// line = this.input.readLine();
-				line = enviarInfo("");
+				System.out.println(true);
+				if (!confErr) {
+					line = this.getMensaje();
+				}
+				confErr = false;
 				this.out.writeUTF(line);
 				// close socket and output stream
 				this.out.close();
@@ -56,11 +55,16 @@ public class Conexion extends Thread {
 				// takes input from the client socket
 				this.in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 				// Print in server the client message
-				crearCandidato(in.readUTF());
+				setResponse(in.readUTF());
 				this.in.close();
 				this.server.close();
 			} catch (IOException i) {
-				System.out.println(i);
+				if (i.getMessage().equalsIgnoreCase("Connection reset by peer")) {
+					confErr = true;
+				} else {
+//					this.setMensaje("-2.032");
+					System.out.println("SIN SERVER");
+				}
 			}
 		}
 		// close the connection
@@ -68,22 +72,39 @@ public class Conexion extends Thread {
 			out.close();
 			socket.close();
 		} catch (IOException i) {
-			System.out.println(i);
+			System.out.println(i.toString());
 		}
 
 	}
 
-	public String enviarInfo(String msm) {
-		return sn.next();
+	public synchronized String getMensaje() {
+		if (mensaje.equalsIgnoreCase("")) {
+			try {
+				wait();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		String tmp = mensaje + "";
+		mensaje = "";
+		return tmp;
 	}
 
-	public void crearCandidato(String msm) {
-		System.out.println(msm);
+	public synchronized void setMensaje(String msm) {
+		mensaje = msm;
+		try {
+			notify();
+		} catch (Exception e) {
+		}
 	}
 
-	public static void main(String args[]) {
-		// Servidor server = new Servidor(64000);
-		Conexion client = new Conexion("127.0.0.1", 64000);
-		client.start();
+	public synchronized String getResponse() {
+		String tmp = inf + "";
+		inf = "";
+		return tmp;
+	}
+
+	public void setResponse(String msm) {
+		inf = msm;
 	}
 }
