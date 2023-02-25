@@ -30,14 +30,12 @@ public class Controller implements MouseListener, MouseMotionListener {
 	private Lista lista;
 	private int xmouse, ymouse;
 	private CandidatosDAO candidatos;
-//	private KeyListener keyNumeros, keyLetras;
 
 	/**
 	 * Constructor method
 	 */
 	public Controller() {
 		candidatos = new CandidatosDAO();
-		candidatos.start();
 		principal = new Principal(this, this);
 		crear = new Crear(this, this);
 		busqueda = new Busqueda(this, this);
@@ -47,7 +45,7 @@ public class Controller implements MouseListener, MouseMotionListener {
 		busquedaEncotrado = new Busqueda(this, this);
 		busqueEliminar = new Busqueda(this, this);
 		lista = new Lista(this, this);
-//		principal.setVisible(true);
+		principal.setVisible(true);
 	}
 
 	@Override
@@ -101,6 +99,7 @@ public class Controller implements MouseListener, MouseMotionListener {
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (e.getSource().equals(principal.obtenerLB(0))) {
+			candidatos.cerrar();
 			System.exit(0);
 		} else if (e.getSource().equals(principal.obtenerLB(2))) {
 			principal.setVisible(false);
@@ -113,19 +112,33 @@ public class Controller implements MouseListener, MouseMotionListener {
 			busqueEliminar.setVisible(true);
 		} else if (e.getSource().equals(principal.obtenerLB(5))) {
 			principal.setVisible(false);
-//			lista.rellenarInfo(candidatos.listar());
+			String tmp = candidatos.listar();
+			if (tmp.equals("ext")) {
+				PopUp.mostrarMensaje("Error con el servidor por favor vuelva a intentar mas tarde");
+				candidatos.cerrar();
+				System.exit(0);
+			}
+			lista.rellenarInfo(tmp);
 			lista.setVisible(true);
 		} else if (e.getSource().equals(principal.obtenerLB(6))) {
 			principal.setVisible(false);
 			busquedaEncotrado.setVisible(true);
 		} else if (e.getSource().equals(crear.obtenerLB(1))) {
 			if (!crear.obtenerTextos().equals("0001")) {
-//				candidatos.ingresar(crear.getNombre(), crear.getApellido(), crear.getCedula(), crear.getEdad(),
-//						crear.getCargo());
-//				PopUp.mostrarMensaje("Aspirante ingresado exitosamente.");
-				crear.setVisible(false);
-				crear.limpiar();
-				principal.setVisible(true);
+				String tmp = candidatos.ingresar(crear.getNombre(), crear.getApellido(), crear.getCedula(),
+						crear.getEdad(), crear.getCargo());
+				if (tmp.equals("true")) {
+					PopUp.mostrarMensaje("Aspirante ingresado exitosamente.");
+					crear.setVisible(false);
+					crear.limpiar();
+					principal.setVisible(true);
+				} else if (tmp.equals("false")) {
+					PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+				} else if (tmp.equals("ext")) {
+					PopUp.mostrarMensaje("Error con el servidor por favor vuelva a intentar mas tarde");
+					candidatos.cerrar();
+					System.exit(0);
+				}
 			} else {
 				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
 			}
@@ -136,16 +149,20 @@ public class Controller implements MouseListener, MouseMotionListener {
 		} else if (e.getSource().equals(busqueda.obtenerLB(1))) {
 			busqueda.setVisible(false);
 			try {
-//				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busqueda.obtenerTextos()));
-//				if (tmp != null) {
-//					modificar.darTextos(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
-//							tmp.getCargos());
-//					modificar.setVisible(true);
-//					busqueda.limpiar();
-//				} else {
-//					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-//					busqueda.setVisible(true);
-//				}
+				String tmp = candidatos.buscar1(Integer.parseInt(busqueda.obtenerTextos()));
+				String[] cand = tmp.split("-");
+				if (!tmp.equals("false") && !tmp.equals("ext")) {
+					modificar.darTextos(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
+					modificar.setVisible(true);
+					busqueda.limpiar();
+				} else if (tmp.equals("false")) {
+					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+					busqueda.setVisible(true);
+				} else if (tmp.equals("ext")) {
+					PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
+					candidatos.cerrar();
+					System.exit(0);
+				}
 			} catch (Exception e2) {
 				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
 				busqueda.setVisible(true);
@@ -155,47 +172,68 @@ public class Controller implements MouseListener, MouseMotionListener {
 			busqueda.limpiar();
 			principal.setVisible(true);
 		} else if (e.getSource().equals(modificar.obtenerLB(1))) {
-//			if (!modificar.obtenerTextos().equals("0001")) {
-//				candidatos.modificar(modificar.getNombre(), modificar.getApellido(), modificar.getCedula(),
-//						modificar.getEdad(), modificar.getCargo());
-//				PopUp.mostrarMensaje("Aspirante actualizado exitosamente.");
-//				modificar.setVisible(false);
-//				modificar.limpiar();
-//				principal.setVisible(true);
-//			} else {
-//				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
-//			}
+			if (!modificar.obtenerTextos().equals("0001")) {
+				String tmp = candidatos.modificar(modificar.getNombre(), modificar.getApellido(), modificar.getCedula(),
+						modificar.getEdad(), modificar.getCargo());
+				if (tmp.equals("true")) {
+					PopUp.mostrarMensaje("Aspirante actualizado exitosamente.");
+					modificar.setVisible(false);
+					modificar.limpiar();
+					principal.setVisible(true);
+				} else if (tmp.equals("false")) {
+					PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+				} else if (tmp.equals("exit")) {
+					PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
+					candidatos.cerrar();
+					System.exit(0);
+				}
+			} else {
+				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+			}
 		} else if (e.getSource().equals(modificar.obtenerLB(2))) {
 			modificar.setVisible(false);
 			modificar.limpiar();
 			principal.setVisible(true);
 		} else if (e.getSource().equals(busqueEliminar.obtenerLB(1))) {
-//			busqueEliminar.setVisible(false);
-//			try {
-//				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busqueEliminar.obtenerTextos()));
-//				if (tmp != null) {
-//					eliminar.rellenarInfo(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
-//							tmp.getCargos());
-//					eliminar.setVisible(true);
-//				} else {
-//					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-//					busqueEliminar.setVisible(true);
-//				}
-//			} catch (Exception e2) {
-//				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
-//				busqueEliminar.setVisible(true);
-//			}
+			busqueEliminar.setVisible(false);
+			try {
+				String tmp = candidatos.buscar1(Integer.parseInt(busqueEliminar.obtenerTextos()));
+				String[] cand = tmp.split("-");
+				if (!tmp.equals("false") && !tmp.equals("ext")) {
+					eliminar.rellenarInfo(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
+					eliminar.setVisible(true);
+					busqueEliminar.limpiar();
+				} else if (tmp.equals("false")) {
+					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+					busqueEliminar.setVisible(true);
+				} else if (tmp.equals("ext")) {
+					PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
+					candidatos.cerrar();
+					System.exit(0);
+				}
+			} catch (Exception e2) {
+				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+				busqueEliminar.setVisible(true);
+			}
 		} else if (e.getSource().equals(busqueEliminar.obtenerLB(2))) {
 			busqueEliminar.setVisible(false);
 			busqueEliminar.limpiar();
 			principal.setVisible(true);
 		} else if (e.getSource().equals(eliminar.obtenerLB(1))) {
-//			candidatos.eliminar(Integer.parseInt(busqueEliminar.obtenerTextos()));
-//			PopUp.mostrarMensaje("Aspirante eliminado exitosamente.");
-//			eliminar.setVisible(false);
-//			busqueEliminar.limpiar();
-//			eliminar.limpiar();
-//			principal.setVisible(true);
+			String tmp = candidatos.eliminar(Integer.parseInt(busqueEliminar.obtenerTextos()));
+			if (tmp.equals("true")) {
+				PopUp.mostrarMensaje("Aspirante eliminado exitosamente.");
+				eliminar.setVisible(false);
+				busqueEliminar.limpiar();
+				eliminar.limpiar();
+				principal.setVisible(true);
+			} else if (tmp.equals("false")) {
+				PopUp.mostrarMensaje("Error al eliminar aspirante trate nuevamente");
+			} else if (tmp.equals("ext")) {
+				PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
+				candidatos.cerrar();
+				System.exit(0);
+			}
 		} else if (e.getSource().equals(eliminar.obtenerLB(2))) {
 			eliminar.setVisible(false);
 			busqueEliminar.limpiar();
@@ -203,20 +241,25 @@ public class Controller implements MouseListener, MouseMotionListener {
 			principal.setVisible(true);
 		} else if (e.getSource().equals(busquedaEncotrado.obtenerLB(1))) {
 			busquedaEncotrado.setVisible(false);
-//			try {
-//				CandidatosDTO tmp = candidatos.buscar(Integer.parseInt(busquedaEncotrado.obtenerTextos()));
-//				if (tmp != null) {
-//					encontrado.rellenarInfo(tmp.getNombre(), tmp.getApellido(), tmp.getCedula() + "", tmp.getEdad(),
-//							tmp.getCargos());
-//					encontrado.setVisible(true);
-//				} else {
-//					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-//					busquedaEncotrado.setVisible(true);
-//				}
-//			} catch (Exception e2) {
-//				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
-//				busquedaEncotrado.setVisible(true);
-//			}
+			try {
+				String tmp = candidatos.buscar1(Integer.parseInt(busquedaEncotrado.obtenerTextos()));
+				String[] cand = tmp.split("-");
+				if (!tmp.equals("false") && !tmp.equals("ext")) {
+					encontrado.rellenarInfo(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
+					encontrado.setVisible(true);
+					busquedaEncotrado.limpiar();
+				} else if (tmp.equals("false")) {
+					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+					busquedaEncotrado.setVisible(true);
+				} else if (tmp.equals("ext")) {
+					PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
+					candidatos.cerrar();
+					System.exit(0);
+				}
+			} catch (Exception e2) {
+				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+				busquedaEncotrado.setVisible(true);
+			}
 			busquedaEncotrado.limpiar();
 		} else if (e.getSource().equals(busquedaEncotrado.obtenerLB(2))) {
 			busquedaEncotrado.setVisible(false);

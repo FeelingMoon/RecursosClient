@@ -1,7 +1,5 @@
 package co.edu.unbosque.model;
 
-import javax.swing.JOptionPane;
-
 import co.edu.unbosque.model.persistence.Conexion;
 
 /**
@@ -11,71 +9,65 @@ import co.edu.unbosque.model.persistence.Conexion;
  * @author Johan Silva
  * @author Miguel Linarez
  */
-public class CandidatosDAO extends Thread {
+public class CandidatosDAO {
 	// implements CandidatosDAO
 	private Conexion con;
 
 	public CandidatosDAO() {
-		this.setName("CandidatosDAO");
-		con = new Conexion("127.0.0.1", 5000);
+		con = new Conexion("127.0.0.1", 5003);
 		con.start();
 	}
 
-	@Override
-	public void run() {
-		String tmp = "";
-		while (!tmp.equals("Over")) {
-			tmp = JOptionPane.showInputDialog("HOLA");
-			con.setMensaje(tmp);
-			System.out.println(con.getResponse());
+	public String obtenerConfirm() {
+		while (true) {
+			String tmp = con.getResponse();
+			System.out.println(tmp);
+			if (!tmp.equals("")) {
+				if (tmp.equals("wrong")) {
+					return "ext";
+				} else if (tmp.equals("fail")) {
+					return "false";
+				} else if (tmp.equals("ok")) {
+					return "true";
+				} else {
+					return tmp;
+				}
+			}
 		}
 	}
 
-//		@Override
-//		public boolean ingresar(String nombre, String apellido, int cedula, int edad, String cargos) {
-//			client.enviarInfo("crear-" + nombre + "-" + apellido + "-" + cedula + "-" + edad + "-" + cargos);
-//		}
-	//
-//		@Override
-//		public boolean modificar(String nombre, String apellido, int cedula, int edad, String cargos) {
-//			for (int i = 0; i < candidatos.size(); i++) {
-//				if (candidatos.get(i).getCedula() == cedula) {
-//					candidatos.set(i, new CandidatosDTO(nombre, apellido, cedula, edad, cargos));
-//					guardar(candidatos);
-//					return true;
-//				}
-//			}
-//			return false;
-//		}
-	//
-//		@Override
-//		public void eliminar(int cedula) {
-//			for (int i = 0; i < candidatos.size(); i++) {
-//				if (candidatos.get(i).getCedula() == cedula) {
-//					candidatos.remove(i);
-//					guardar(candidatos);
-//					return;
-//				}
-//			}
-//		}
-	//
-//		@Override
-//		public CandidatosDTO buscar(int cedula) {
-//			for (int i = 0; i < candidatos.size(); i++) {
-//				if (candidatos.get(i).getCedula() == cedula) {
-//					return candidatos.get(i);
-//				}
-//			}
-//			return null;
-//		}
-	//
-//		@Override
-//		public String listar() {
-//			String tmp = "";
-//			for (int i = 0; i < candidatos.size(); i++) {
-//				tmp += candidatos.get(i).toString() + "\n";
-//			}
-//			return tmp;
-//		}
+	public String ingresar(String nombre, String apellido, int cedula, int edad, String cargos) {
+		con.setMensaje("crear-" + nombre + "-" + apellido + "-" + cedula + "-" + edad + "-" + cargos);
+		return obtenerConfirm();
+	}
+
+	public String modificar(String nombre, String apellido, int cedula, int edad, String cargos) {
+		con.setMensaje("modificar-" + nombre + "-" + apellido + "-" + cedula + "-" + edad + "-" + cargos);
+		return obtenerConfirm();
+	}
+
+	public String eliminar(int cedula) {
+		con.setMensaje("eliminar-" + cedula);
+		return obtenerConfirm();
+	}
+
+	public String listar() {
+		con.setMensaje("listar");
+		return obtenerConfirm();
+	}
+
+	public String buscar2(int nombre) {
+		con.setMensaje("buscar2-" + nombre);
+		return obtenerConfirm();
+	}
+
+	public String buscar1(int nombre) {
+		con.setMensaje("buscar1-" + nombre);
+		return obtenerConfirm();
+	}
+
+	public void cerrar() {
+		con.setMensaje("Over");
+	}
 
 }

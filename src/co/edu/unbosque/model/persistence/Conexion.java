@@ -40,7 +40,6 @@ public class Conexion extends Thread {
 				this.socket = new Socket(this.address, this.port);
 				// sends output to the socket
 				this.out = new DataOutputStream(socket.getOutputStream());
-				System.out.println(true);
 				if (!confErr) {
 					line = this.getMensaje();
 				}
@@ -59,11 +58,11 @@ public class Conexion extends Thread {
 				this.in.close();
 				this.server.close();
 			} catch (IOException i) {
+				System.out.println(i);
 				if (i.getMessage().equalsIgnoreCase("Connection reset by peer")) {
 					confErr = true;
 				} else {
-//					this.setMensaje("-2.032");
-					System.out.println("SIN SERVER");
+					setResponse("wrong");
 				}
 			}
 		}
