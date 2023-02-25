@@ -14,7 +14,7 @@ public class CandidatosDAO {
 	private Conexion con;
 
 	public CandidatosDAO() {
-		con = new Conexion("127.0.0.1", 5003);
+		con = new Conexion("127.0.0.1", 5000);
 		con.start();
 	}
 
