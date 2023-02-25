@@ -202,7 +202,6 @@ public class Controller implements MouseListener, MouseMotionListener {
 				if (!tmp.equals("false") && !tmp.equals("ext")) {
 					eliminar.rellenarInfo(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
 					eliminar.setVisible(true);
-					busqueEliminar.limpiar();
 				} else if (tmp.equals("false")) {
 					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
 					busqueEliminar.setVisible(true);

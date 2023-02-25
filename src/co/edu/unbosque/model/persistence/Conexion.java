@@ -32,7 +32,6 @@ public class Conexion extends Thread {
 
 	@Override
 	public void run() {
-
 		// keep reading until "Over" is input
 		while (!line.equals("Over")) {
 			// establish a connection
@@ -58,12 +57,12 @@ public class Conexion extends Thread {
 				this.in.close();
 				this.server.close();
 			} catch (IOException i) {
-				System.out.println(i);
 				if (i.getMessage().equalsIgnoreCase("Connection reset by peer")) {
 					confErr = true;
 				} else {
 					setResponse("wrong");
 				}
+				System.out.println("SIN SERVER");
 			}
 		}
 		// close the connection
@@ -72,6 +71,7 @@ public class Conexion extends Thread {
 			socket.close();
 		} catch (IOException i) {
 			System.out.println(i.toString());
+			System.exit(0);
 		}
 
 	}
@@ -81,7 +81,6 @@ public class Conexion extends Thread {
 			try {
 				wait();
 			} catch (Exception e) {
-				e.printStackTrace();
 			}
 		}
 		String tmp = mensaje + "";
