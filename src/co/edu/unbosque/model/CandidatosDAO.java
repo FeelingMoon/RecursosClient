@@ -21,12 +21,13 @@ public class CandidatosDAO {
 	public String obtenerConfirm() {
 		while (true) {
 			String tmp = con.getResponse();
+			System.out.println(tmp);
 			if (!tmp.equals("")) {
 				if (tmp.equals("wrong")) {
 					return "ext";
 				} else if (tmp.equals("fail")) {
 					return "false";
-				} else if (tmp.equals("ok")) {
+				} else if (tmp.equals("accomplished")) {
 					return "true";
 				} else {
 					return tmp;
