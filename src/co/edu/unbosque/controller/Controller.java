@@ -3,8 +3,13 @@ package co.edu.unbosque.controller;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
-import co.edu.unbosque.model.CandidatosDAO;
 import co.edu.unbosque.view.Busqueda;
 import co.edu.unbosque.view.Crear;
 import co.edu.unbosque.view.Eliminar;
@@ -20,7 +25,7 @@ import co.edu.unbosque.view.Principal;
  * @author Johan Silva
  * @author Miguel Linarez
  */
-public class Controller implements MouseListener, MouseMotionListener {
+public class Controller extends Thread implements MouseListener, MouseMotionListener {
 	private Principal principal;
 	private Crear crear;
 	private Busqueda busqueda, busqueEliminar, busquedaEncotrado;
@@ -29,13 +34,17 @@ public class Controller implements MouseListener, MouseMotionListener {
 	private Encontrado encontrado;
 	private Lista lista;
 	private int xmouse, ymouse;
-	private CandidatosDAO candidatos;
+	private Socket socket;
+	private ServerSocket server;
+	private DataOutputStream out;
+	private DataInputStream in;
+	private String address, line, res;
+	private int port;
 
 	/**
 	 * Constructor method
 	 */
-	public Controller() {
-		candidatos = new CandidatosDAO();
+	public Controller(String address, int port) {
 		principal = new Principal(this, this);
 		crear = new Crear(this, this);
 		busqueda = new Busqueda(this, this);
@@ -46,6 +55,145 @@ public class Controller implements MouseListener, MouseMotionListener {
 		busqueEliminar = new Busqueda(this, this);
 		lista = new Lista(this, this);
 		principal.setVisible(true);
+		this.socket = null;
+		this.server = null;
+		this.out = null;
+		this.address = address;
+		this.port = port;
+		this.line = "";
+		this.res = "";
+	}
+
+	@Override
+	public void run() {
+
+		// string to read message from input
+
+		// keep reading until "Over" is input
+		while (!line.equals("Over")) {
+			// establish a connection
+			try {
+				this.socket = new Socket(this.address, this.port);
+				System.out.println("Connected");
+
+				// sends output to the socket
+				this.out = new DataOutputStream(socket.getOutputStream());
+
+				// line = this.input.readLine();
+				if (line.equals("")) {
+					pausarHilo();
+				}
+				this.out.writeUTF(line);
+				// close socket and output stream
+				this.out.close();
+				this.socket.close();
+				// Create a serverSocket to wait message from server
+				this.server = new ServerSocket(this.port + 1);
+				this.socket = server.accept();
+				// takes input from the client socket
+				this.in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+				//
+				res = in.readUTF();
+				if (res.equals("ext")) {
+					PopUp.mostrarMensaje("Error con el servidor por favor vuelva a intentar mas tarde");
+					break;
+				} else if (line.equals("listar") && !res.equals("")) {
+					lista.rellenarInfo(res);
+					lista.setVisible(true);
+				} else if (line.split("-")[0].equals("crear")) {
+					System.out.println(res);
+					if (res.equals("true")) {
+						PopUp.mostrarMensaje("Aspirante ingresado exitosamente.");
+						crear.setVisible(false);
+						crear.limpiar();
+						principal.setVisible(true);
+					} else if (res.equals("false")) {
+						PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+					}
+				} else if (line.split("-")[0].equals("buscar1") && line.split("-")[2].equals("1")) {
+					String[] cand = res.split("-");
+					if (!res.equals("false") && !res.equals("ext")) {
+						modificar.darTextos(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
+						modificar.setVisible(true);
+						busqueda.limpiar();
+					} else if (res.equals("false")) {
+						PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+						busqueda.setVisible(true);
+					}
+				} else if (line.split("-")[0].equals("modificar")) {
+					if (res.equals("true")) {
+						PopUp.mostrarMensaje("Aspirante actualizado exitosamente.");
+						modificar.setVisible(false);
+						modificar.limpiar();
+						principal.setVisible(true);
+					} else if (res.equals("false")) {
+						PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
+					}
+				} else if (line.split("-")[0].equals("buscar1") && line.split("-")[2].equals("2")) {
+					String[] cand = res.split("-");
+					if (!res.equals("false") && !res.equals("ext")) {
+						eliminar.rellenarInfo(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
+						eliminar.setVisible(true);
+					} else if (res.equals("false")) {
+						PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+						busqueEliminar.setVisible(true);
+					}
+				} else if (line.split("-")[0].equals("eliminar")) {
+					if (res.equals("true")) {
+						PopUp.mostrarMensaje("Aspirante eliminado exitosamente.");
+						eliminar.setVisible(false);
+						busqueEliminar.limpiar();
+						eliminar.limpiar();
+						principal.setVisible(true);
+					} else if (res.equals("false")) {
+						PopUp.mostrarMensaje("Error al eliminar aspirante trate nuevamente");
+					}
+				} else if (line.split("-")[0].equals("buscar1") && line.split("-")[2].equals("3")) {
+					String[] cand = res.split("-");
+					if (!res.equals("false") && !res.equals("ext")) {
+						encontrado.rellenarInfo(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
+						encontrado.setVisible(true);
+						busquedaEncotrado.limpiar();
+					} else if (res.equals("false")) {
+						PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
+						busquedaEncotrado.setVisible(true);
+					}
+				}
+				if (!line.equals("Over")) {
+					line = "";
+				}
+				this.in.close();
+				this.server.close();
+			} catch (java.io.EOFException e) {
+				PopUp.mostrarMensaje("Gracias por preferirnos, sesion cerrada.");
+				break;
+			} catch (IOException i) {
+				System.out.println(i);
+			}
+		}
+		// close the connection
+		try {
+			out.close();
+			socket.close();
+			if (line.equals("Over")) {
+				System.exit(0);
+			}
+		} catch (IOException i) {
+			System.out.println(i);
+		}
+	}
+
+	public synchronized void pausarHilo() {
+		try {
+			this.wait();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public synchronized void enviarInfo(String msm) {
+		line = msm;
+		this.notify();
 	}
 
 	@Override
@@ -99,8 +247,7 @@ public class Controller implements MouseListener, MouseMotionListener {
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (e.getSource().equals(principal.obtenerLB(0))) {
-			candidatos.cerrar();
-			System.exit(0);
+			enviarInfo("Over");
 		} else if (e.getSource().equals(principal.obtenerLB(2))) {
 			principal.setVisible(false);
 			crear.setVisible(true);
@@ -112,33 +259,14 @@ public class Controller implements MouseListener, MouseMotionListener {
 			busqueEliminar.setVisible(true);
 		} else if (e.getSource().equals(principal.obtenerLB(5))) {
 			principal.setVisible(false);
-			String tmp = candidatos.listar();
-			if (tmp.equals("ext")) {
-				PopUp.mostrarMensaje("Error con el servidor por favor vuelva a intentar mas tarde");
-				candidatos.cerrar();
-				System.exit(0);
-			}
-			lista.rellenarInfo(tmp);
-			lista.setVisible(true);
+			enviarInfo("listar");
 		} else if (e.getSource().equals(principal.obtenerLB(6))) {
 			principal.setVisible(false);
 			busquedaEncotrado.setVisible(true);
 		} else if (e.getSource().equals(crear.obtenerLB(1))) {
 			if (!crear.obtenerTextos().equals("0001")) {
-				String tmp = candidatos.ingresar(crear.getNombre(), crear.getApellido(), crear.getCedula(),
-						crear.getEdad(), crear.getCargo());
-				if (tmp.equals("true")) {
-					PopUp.mostrarMensaje("Aspirante ingresado exitosamente.");
-					crear.setVisible(false);
-					crear.limpiar();
-					principal.setVisible(true);
-				} else if (tmp.equals("false")) {
-					PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
-				} else if (tmp.equals("ext")) {
-					PopUp.mostrarMensaje("Error con el servidor por favor vuelva a intentar mas tarde");
-					candidatos.cerrar();
-					System.exit(0);
-				}
+				enviarInfo("crear-" + crear.getNombre() + "-" + crear.getApellido() + "-" + crear.getCedula() + "-"
+						+ crear.getEdad() + "-" + crear.getCargo());
 			} else {
 				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
 			}
@@ -149,20 +277,7 @@ public class Controller implements MouseListener, MouseMotionListener {
 		} else if (e.getSource().equals(busqueda.obtenerLB(1))) {
 			busqueda.setVisible(false);
 			try {
-				String tmp = candidatos.buscar1(Integer.parseInt(busqueda.obtenerTextos()));
-				String[] cand = tmp.split("-");
-				if (!tmp.equals("false") && !tmp.equals("ext")) {
-					modificar.darTextos(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
-					modificar.setVisible(true);
-					busqueda.limpiar();
-				} else if (tmp.equals("false")) {
-					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-					busqueda.setVisible(true);
-				} else if (tmp.equals("ext")) {
-					PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
-					candidatos.cerrar();
-					System.exit(0);
-				}
+				enviarInfo("buscar1-" + Integer.parseInt(busqueda.obtenerTextos()) + "-1");
 			} catch (Exception e2) {
 				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
 				busqueda.setVisible(true);
@@ -173,20 +288,8 @@ public class Controller implements MouseListener, MouseMotionListener {
 			principal.setVisible(true);
 		} else if (e.getSource().equals(modificar.obtenerLB(1))) {
 			if (!modificar.obtenerTextos().equals("0001")) {
-				String tmp = candidatos.modificar(modificar.getNombre(), modificar.getApellido(), modificar.getCedula(),
-						modificar.getEdad(), modificar.getCargo());
-				if (tmp.equals("true")) {
-					PopUp.mostrarMensaje("Aspirante actualizado exitosamente.");
-					modificar.setVisible(false);
-					modificar.limpiar();
-					principal.setVisible(true);
-				} else if (tmp.equals("false")) {
-					PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
-				} else if (tmp.equals("exit")) {
-					PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
-					candidatos.cerrar();
-					System.exit(0);
-				}
+				enviarInfo("modificar-" + modificar.getNombre() + "-" + modificar.getApellido() + "-"
+						+ modificar.getCedula() + "-" + modificar.getEdad() + "-" + modificar.getCargo());
 			} else {
 				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
 			}
@@ -197,19 +300,7 @@ public class Controller implements MouseListener, MouseMotionListener {
 		} else if (e.getSource().equals(busqueEliminar.obtenerLB(1))) {
 			busqueEliminar.setVisible(false);
 			try {
-				String tmp = candidatos.buscar1(Integer.parseInt(busqueEliminar.obtenerTextos()));
-				String[] cand = tmp.split("-");
-				if (!tmp.equals("false") && !tmp.equals("ext")) {
-					eliminar.rellenarInfo(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
-					eliminar.setVisible(true);
-				} else if (tmp.equals("false")) {
-					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-					busqueEliminar.setVisible(true);
-				} else if (tmp.equals("ext")) {
-					PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
-					candidatos.cerrar();
-					System.exit(0);
-				}
+				enviarInfo("buscar1-" + Integer.parseInt(busqueEliminar.obtenerTextos()) + "-2");
 			} catch (Exception e2) {
 				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
 				busqueEliminar.setVisible(true);
@@ -219,20 +310,7 @@ public class Controller implements MouseListener, MouseMotionListener {
 			busqueEliminar.limpiar();
 			principal.setVisible(true);
 		} else if (e.getSource().equals(eliminar.obtenerLB(1))) {
-			String tmp = candidatos.eliminar(Integer.parseInt(busqueEliminar.obtenerTextos()));
-			if (tmp.equals("true")) {
-				PopUp.mostrarMensaje("Aspirante eliminado exitosamente.");
-				eliminar.setVisible(false);
-				busqueEliminar.limpiar();
-				eliminar.limpiar();
-				principal.setVisible(true);
-			} else if (tmp.equals("false")) {
-				PopUp.mostrarMensaje("Error al eliminar aspirante trate nuevamente");
-			} else if (tmp.equals("ext")) {
-				PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
-				candidatos.cerrar();
-				System.exit(0);
-			}
+			enviarInfo("eliminar-" + Integer.parseInt(busqueEliminar.obtenerTextos()));
 		} else if (e.getSource().equals(eliminar.obtenerLB(2))) {
 			eliminar.setVisible(false);
 			busqueEliminar.limpiar();
@@ -241,20 +319,7 @@ public class Controller implements MouseListener, MouseMotionListener {
 		} else if (e.getSource().equals(busquedaEncotrado.obtenerLB(1))) {
 			busquedaEncotrado.setVisible(false);
 			try {
-				String tmp = candidatos.buscar1(Integer.parseInt(busquedaEncotrado.obtenerTextos()));
-				String[] cand = tmp.split("-");
-				if (!tmp.equals("false") && !tmp.equals("ext")) {
-					encontrado.rellenarInfo(cand[0], cand[1], cand[2] + "", Integer.parseInt(cand[3]), cand[4]);
-					encontrado.setVisible(true);
-					busquedaEncotrado.limpiar();
-				} else if (tmp.equals("false")) {
-					PopUp.mostrarMensaje("Aspirante no encontrado, intente nuevamente");
-					busquedaEncotrado.setVisible(true);
-				} else if (tmp.equals("ext")) {
-					PopUp.mostrarMensaje("Error con el servidor vuelva a ingresar nuevamente");
-					candidatos.cerrar();
-					System.exit(0);
-				}
+				enviarInfo("buscar1-" + Integer.parseInt(busquedaEncotrado.obtenerTextos()) + "-3");
 			} catch (Exception e2) {
 				PopUp.mostrarMensaje("Error al ingresar algun valor, por favor revisar e intentar nuevamente.");
 				busquedaEncotrado.setVisible(true);
